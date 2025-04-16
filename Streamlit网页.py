@@ -23,8 +23,8 @@ model = load_model()
 st.title("ICU老年患者1年生存率预测系统")
 st.markdown("""
 **临床指导说明**：  
-请输入患者的临床特征，系统将自动预测1年生存风险。  
-高风险患者（>40%）建议加强监护和定期随访。
+请输入您的临床特征，系统将自动预测您的1年生存风险。  
+高风险患者（>70%）建议加强监护和定期随访。
 """)
 
 # 侧边栏输入界面
@@ -125,7 +125,7 @@ if st.button("开始预测"):
         if risk_percent < 30:
             risk_level = "低风险"
             color = "green"
-        elif 30 <= risk_percent < 60:
+        elif 30 <= risk_percent < 70:
             risk_level = "中风险"
             color = "orange"
         else:
