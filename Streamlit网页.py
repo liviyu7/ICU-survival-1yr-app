@@ -1,5 +1,5 @@
 # survival_prediction_app.py
-import os
+import pathlib
 import streamlit as st
 import joblib
 import pandas as pd
@@ -10,7 +10,8 @@ from sksurv.ensemble import RandomSurvivalForest
 # 加载预训练模型
 @st.cache_resource
 def load_model():
-    model_path = os.path.join("D:\\Program Files\\Python\\PyCharm Community Edition 2024.3.4\\PyCharmproject", "optimized_rsf.pkl")
+    current_dir = pathlib.Path(__file__).parent
+    model_path = current_dir / "optimized_rsf.pkl"
     return joblib.load(model_path)
 
 
