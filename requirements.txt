@@ -1,6 +1,5 @@
-os
-streamlit
-scikit-survival
-joblib
-pandas
-numpy
+streamlit==1.44.1
+scikit-survival==0.24.1
+joblib==1.4.2
+pandas==2.2.3
+numpy==2.2.4
