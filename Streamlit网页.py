@@ -1,11 +1,8 @@
-# survival_prediction_app.py
 import pathlib
 import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
-from sksurv.ensemble import RandomSurvivalForest
-
 
 # 加载预训练模型
 @st.cache_resource
@@ -14,10 +11,7 @@ def load_model():
     model_path = current_dir / "optimized_rsf.pkl"
     return joblib.load(model_path)
 
-
 model = load_model()
-
-
 
 # 网页标题
 st.title("ICU老年患者1年生存率预测系统")
@@ -102,8 +96,8 @@ input_data = pd.DataFrame({
     "drug_diabetes": [int(drug_diabetes)]
 })
 
-# 使用训练时的特征顺序重新排列预测输入
-correct_order = model.feature_names_in_  # 获取模型训练时的特征顺序
+# 使用训练时的特征顺序排列预测输入
+correct_order = model.feature_names_in_
 input_data = input_data[correct_order]
 
 # 预测按钮
@@ -111,7 +105,7 @@ if st.button("开始预测"):
     try:
         # 获取预测结果
         cum_hazard_fns = model.predict_cumulative_hazard_function(input_data)
-        max_time = 365  # 1年生存率
+        max_time = 365
         risk_score = 1 - np.exp(-cum_hazard_fns[0](max_time))
 
         # 结果可视化
@@ -177,10 +171,3 @@ with st.expander("使用说明"):
     4. 高风险患者建议打印报告留存
     """)
 
-# 部署说明（可选）
-# 创建requirements.txt文件需包含：
-# streamlit
-# scikit-survival
-# joblib
-# pandas
-# numpy
