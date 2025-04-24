@@ -1,73 +1,68 @@
-# survival_prediction_app.py
-import os
+import pathlib
 import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
-from sksurv.ensemble import RandomSurvivalForest
-
 
 # 加载预训练模型
 @st.cache_resource
 def load_model():
-    model_path = os.path.join("D:\\Program Files\\Python\\PyCharm Community Edition 2024.3.4\\PyCharmproject", "optimized_rsf.pkl")
+    current_dir = pathlib.Path(__file__).parent
+    model_path = current_dir / "optimized_rsf.pkl"
     return joblib.load(model_path)
 
-
 model = load_model()
-
-
 
 # 网页标题
 st.title("ICU老年患者1年生存率预测系统")
 st.markdown("""
 **临床指导说明**：  
-请输入患者的临床特征，系统将自动预测1年生存风险。  
-高风险患者（>40%）建议加强监护和定期随访。
+请输入您的临床特征，系统将自动预测您的1年生存风险。  
+高风险患者（>70%）建议加强监护和定期随访。
 """)
 
 # 侧边栏输入界面
 with st.sidebar:
     st.header("患者特征输入")
 
-    gender = st.selectbox("性别",options=[0, 1],help="0: 女性, 1:男性")
-    raw_age = st.selectbox("年龄分组", options=[0, 1, 2, 3],
-                        help="0: 61-70岁, 1: 71-80岁, 2: 81-90岁, 3: ≥91岁")
-    insurance = st.selectbox("保险类型", options=[0, 1, 2, 3],
-                             help="0: 其他, 1: 基本医保, 2: 全面医保, 3: 个人保险")
-    marital_status = st.selectbox("婚姻状况",options=[0, 1],help="0: 未婚/离异/丧偶/独居, 1:已婚")
+    with st.expander("基本信息"):
+        gender = st.selectbox("性别",options=[0, 1],help="0: 女性, 1:男性")
+        raw_age = st.selectbox("年龄分组", options=[0, 1, 2, 3],help="0: 61-70岁, 1: 71-80岁, 2: 81-90岁, 3: ≥91岁")
+
     # 二分类特征分组显示
-    with st.expander("生理指标"):
+    with st.expander("躯体健康指标"):
         malnutrition = st.checkbox("营养不良")
         mobility = st.checkbox("行动障碍")
-        abnormal_liver_function = st.checkbox("肝功能异常")
-        hypertension = st.checkbox("高血压")
-        dysphagia = st.checkbox("吞咽困难")
-        chronic_renal_failure = st.checkbox("慢性肾衰竭")
-        sarcopenia = st.checkbox("肌肉减少症")
-
-    with st.expander("疾病史"):
-        coronary_atherosclerosis = st.checkbox("冠状动脉粥样硬化")
-        history_of_falls = st.checkbox("跌倒史")
         copd = st.checkbox("慢性阻塞性肺病")
-        pressure_ulcer = st.checkbox("压力性溃疡")
-        osteoporosis = st.checkbox("骨质疏松症")
-        degenerative_joint_disease = st.checkbox("退行性关节病")
-
-    with st.expander("精神状态"):
-        sleep_disorder = st.checkbox("睡眠障碍")
-        anxiety = st.checkbox("焦虑症")
-        delirium = st.checkbox("谵妄")
-        depression = st.checkbox("抑郁症")
+        chronic_renal_failure = st.checkbox("慢性肾衰竭")
+        abnormal_liver_function = st.checkbox("肝功能异常")
+        pressure_ulcer = st.checkbox("压疮")
+        history_of_falls = st.checkbox("跌倒史")
+        sarcopenia = st.checkbox("肌肉减少症")
         hearing_impairment = st.checkbox("听力障碍")
+        osteoporosis = st.checkbox("骨质疏松症")
+        degenerative_joint_disease = st.checkbox("关节退行性疾病")
+        coronary_atherosclerosis = st.checkbox("冠状动脉粥样硬化")
+        dysphagia = st.checkbox("吞咽困难")
+        hypertension = st.checkbox("高血压")
 
-    with st.expander("药物治疗"):
-        drug_urinary_incontinence = st.checkbox("使用尿失禁药物")
-        drug_cardiovascular = st.checkbox("使用心血管药物")
+    with st.expander("社会支持"):
+        insurance = st.selectbox("保险状况", options=[0, 1, 2, 3],help="0: 其他, 1: 基本医保, 2: 全面医保, 3: 个人保险")
+        marital_status = st.selectbox("婚姻状况",options=[0, 1],help="0: 未婚/离异/丧偶/独居, 1:已婚")
+
+    with st.expander("心理健康指标"):
+        sleep_disorder = st.checkbox("睡眠障碍")
+        anxiety = st.checkbox("焦虑")
+        depression = st.checkbox("抑郁")
+        delirium = st.checkbox("谵妄")
+
+    with st.expander("药物使用情况"):
+        drug_renal_failure = st.checkbox("使用肾功能不全药物")
         drug_antithrombotic = st.checkbox("使用抗血栓药物")
-        drug_renal_failure = st.checkbox("使用肾衰竭药物")
+        drug_cardiovascular = st.checkbox("使用心血管药物")
         drug_chronic_pain = st.checkbox("使用慢性疼痛药物")
         drug_diabetes = st.checkbox("使用糖尿病药物")
+        drug_urinary_incontinence = st.checkbox("使用尿失禁药物")
 
 # 构建输入数据框
 input_data = pd.DataFrame({
@@ -75,14 +70,12 @@ input_data = pd.DataFrame({
     "raw_age": [raw_age],
     "marital_status": [int(marital_status)],
     "insurance": [insurance],
-    # 生理指标
     "malnutrition": [int(malnutrition)],
     "mobility": [int(mobility)],
     "abnormal_liver_function": [int(abnormal_liver_function)],
     "dysphagia": [int(dysphagia)],
     "chronic_renal_failure": [int(chronic_renal_failure)],
     "sarcopenia": [int(sarcopenia)],
-    # 疾病史
     "hypertension": [int(hypertension)],
     "coronary_atherosclerosis": [int(coronary_atherosclerosis)],
     "history_of_falls": [int(history_of_falls)],
@@ -90,13 +83,11 @@ input_data = pd.DataFrame({
     "pressure_ulcer": [int(pressure_ulcer)],
     "osteoporosis": [int(osteoporosis)],
     "degenerative_joint_disease": [int(degenerative_joint_disease)],
-    # 精神状态
     "sleep_disorder": [int(sleep_disorder)],
     "anxiety": [int(anxiety)],
     "delirium": [int(delirium)],
     "depression": [int(depression)],
     "hearing_impairment": [int(hearing_impairment)],
-    # 药物治疗
     "drug_urinary_incontinence": [int(drug_urinary_incontinence)],
     "drug_cardiovascular": [int(drug_cardiovascular)],
     "drug_antithrombotic": [int(drug_antithrombotic)],
@@ -105,8 +96,8 @@ input_data = pd.DataFrame({
     "drug_diabetes": [int(drug_diabetes)]
 })
 
-# 使用训练时的特征顺序重新排列预测输入
-correct_order = model.feature_names_in_  # 获取模型训练时的特征顺序
+# 使用训练时的特征顺序排列预测输入
+correct_order = model.feature_names_in_
 input_data = input_data[correct_order]
 
 # 预测按钮
@@ -114,7 +105,7 @@ if st.button("开始预测"):
     try:
         # 获取预测结果
         cum_hazard_fns = model.predict_cumulative_hazard_function(input_data)
-        max_time = 365  # 1年生存率
+        max_time = 365
         risk_score = 1 - np.exp(-cum_hazard_fns[0](max_time))
 
         # 结果可视化
@@ -128,7 +119,7 @@ if st.button("开始预测"):
         if risk_percent < 30:
             risk_level = "低风险"
             color = "green"
-        elif 30 <= risk_percent < 60:
+        elif 30 <= risk_percent < 70:
             risk_level = "中风险"
             color = "orange"
         else:
@@ -178,17 +169,5 @@ with st.expander("使用说明"):
     2. 点击【开始预测】按钮获取结果
     3. 根据风险等级查看临床建议
     4. 高风险患者建议打印报告留存
-
-    **特征说明**：
-    - 年龄分组：根据中国老年分段标准
-    - 保险类型：反映患者医疗保障水平
-    - 药物类别：最近3个月持续使用
     """)
 
-# 部署说明（可选）
-# 创建requirements.txt文件需包含：
-# streamlit
-# scikit-survival
-# joblib
-# pandas
-# numpy
